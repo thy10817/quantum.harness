@@ -1258,7 +1258,9 @@ def execute(smoke: bool) -> dict[str, Any]:
         "firewall": {
             "exact_truth_available_online": False,
             "all_runs_retained": True,
-            "same_budget_all_methods": True,
+            "all_method_budgets_match_preregistered_values": True,
+            "equal_budget_comparison_pairs_match": True,
+            "same_budget_all_methods": False,
             "paired_noise_seed_all_methods": True,
         },
     }
