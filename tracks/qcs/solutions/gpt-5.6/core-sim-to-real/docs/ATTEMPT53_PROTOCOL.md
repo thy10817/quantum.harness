@@ -13,6 +13,13 @@ local wrapper that accepts only the four seeds listed below. The shared truth
 generator and all earlier result files remain unchanged. No method query or
 fidelity result existed when this amendment was made.
 
+A second smoke invocation completed the seven calibration methods but failed
+before writing a result because WSL Git cannot resolve the administrative path
+inside a Windows-created worktree. The runner now accepts the already frozen
+40-character commit through `ATTEMPT53_GIT_COMMIT` and validates its format.
+No algorithm, seed, query budget, success rule, or observed calibration value
+was changed after that smoke.
+
 ## Question
 
 Does noisy Bayesian optimization, or Bayesian warm-start followed by one

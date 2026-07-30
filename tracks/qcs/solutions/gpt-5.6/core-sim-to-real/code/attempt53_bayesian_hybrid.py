@@ -91,6 +91,21 @@ def git(*arguments: str) -> str:
     ).stdout.strip()
 
 
+def frozen_git_commit() -> str:
+    value = os.environ.get("ATTEMPT53_GIT_COMMIT", "").strip()
+    if not value:
+        try:
+            value = git("rev-parse", "HEAD")
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(
+                "set ATTEMPT53_GIT_COMMIT when a Windows-created worktree "
+                "cannot be resolved by WSL git"
+            ) from error
+    if len(value) != 40 or any(character not in "0123456789abcdef" for character in value):
+        raise RuntimeError(f"invalid ATTEMPT53_GIT_COMMIT {value!r}")
+    return value
+
+
 def validate_config(config: dict[str, Any]) -> None:
     if config["methods"] != list(METHODS):
         raise RuntimeError("method order changed")
@@ -1221,7 +1236,7 @@ def execute(smoke: bool) -> dict[str, Any]:
         "evidence_level": "implementation-smoke"
         if smoke
         else "exploratory-development",
-        "git_commit": git("rev-parse", "HEAD"),
+        "git_commit": frozen_git_commit(),
         "source_hashes": {
             "runner": canonical_sha256(Path(__file__)),
             "config": canonical_sha256(CONFIG_PATH),
