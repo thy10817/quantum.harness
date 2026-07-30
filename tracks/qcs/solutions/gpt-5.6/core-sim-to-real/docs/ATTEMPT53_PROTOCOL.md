@@ -4,6 +4,15 @@ Date frozen: 2026-07-30
 
 Evidence status before execution: exploratory protocol only
 
+Implementation amendment before any calibration result: the first smoke
+invocation stopped before constructing a truth because the shared
+`phase3_common.make_truth` intentionally rejects seeds outside Attempts
+35–49. Attempt 53 therefore reproduces the same frozen
+`SeedSequence([113, 11, seed])`, control-map, and Hermitian-drift recipe in a
+local wrapper that accepts only the four seeds listed below. The shared truth
+generator and all earlier result files remain unchanged. No method query or
+fidelity result existed when this amendment was made.
+
 ## Question
 
 Does noisy Bayesian optimization, or Bayesian warm-start followed by one

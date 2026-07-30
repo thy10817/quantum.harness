@@ -27,7 +27,7 @@ from scipy.special import ndtr, ndtri
 from scipy.stats import norm, qmc
 
 import attempt44_dimension_cost as base
-from phase3_common import TRUTH_FAMILIES, build_nominal_model, make_truth, scan_widths
+from phase3_common import TRUTH_FAMILIES, build_nominal_model, scan_widths
 
 
 HERE = Path(__file__).resolve().parent
@@ -139,6 +139,73 @@ def paired_seed(family_index: int, truth_seed: int, replicate: int) -> int:
         [113, 53, int(family_index), int(truth_seed), int(replicate)]
     )
     return int(sequence.generate_state(1, dtype=np.uint64)[0])
+
+
+def make_attempt53_truth(
+    model: Any,
+    family: str,
+    epsilon: float,
+    seed: int,
+    config: dict[str, Any],
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """Extend the frozen truth recipe only to Attempt-53 preregistered seeds."""
+
+    if family not in config["benchmark"]["families"]:
+        raise ValueError(f"family {family!r} is not preregistered")
+    expected_epsilon = float(
+        config["benchmark"]["fixed_epsilon_by_family"][family]
+    )
+    if float(epsilon) != expected_epsilon:
+        raise ValueError(f"epsilon {epsilon!r} is not preregistered")
+    if int(seed) not in [int(value) for value in config["benchmark"]["truth_seeds"]]:
+        raise ValueError(f"seed {seed!r} is not preregistered")
+
+    seed_sequence = np.random.SeedSequence([113, 11, int(seed)])
+    map_ss, drift_ss = seed_sequence.spawn(2)
+    map_rng = np.random.default_rng(map_ss)
+    drift_rng = np.random.default_rng(drift_ss)
+    nominal_drift = np.asarray(model.h_drift, dtype=np.complex128)
+    nominal_controls = np.asarray(model.h_controls, dtype=np.complex128)
+    control_count = nominal_controls.shape[0]
+    dimension = nominal_drift.shape[0]
+
+    mismatch = map_rng.normal(size=(control_count, control_count))
+    mismatch /= np.linalg.norm(mismatch, ord=2)
+    control_map = np.eye(control_count) + float(epsilon) * mismatch
+
+    raw = drift_rng.normal(size=(dimension, dimension)) + 1j * drift_rng.normal(
+        size=(dimension, dimension)
+    )
+    drift_direction = (raw + raw.conj().T) / 2
+    drift_direction -= (
+        np.trace(drift_direction) * np.eye(dimension) / dimension
+    )
+    drift_direction /= np.linalg.norm(drift_direction, ord="fro")
+    drift_scale = np.linalg.norm(nominal_drift, ord="fro")
+
+    true_drift = np.array(nominal_drift, copy=True)
+    true_controls = np.array(nominal_controls, copy=True)
+    if family in ("drift", "combined"):
+        true_drift += float(epsilon) * drift_scale * drift_direction
+    if family in ("control-map", "combined"):
+        true_controls = np.einsum(
+            "ij,jab->iab", control_map, nominal_controls
+        )
+    metadata = {
+        "family": family,
+        "epsilon": float(epsilon),
+        "seed": int(seed),
+        "paired_seed_sequence": [113, 11, int(seed)],
+        "control_map_minus_identity_spectral_norm": float(
+            np.linalg.norm(control_map - np.eye(control_count), ord=2)
+        ),
+        "relative_drift_frobenius_norm": float(
+            np.linalg.norm(true_drift - nominal_drift, ord="fro")
+            / drift_scale
+        ),
+        "attempt53_local_extension_of_frozen_truth_recipe": True,
+    }
+    return true_drift, true_controls, metadata
 
 
 def algorithm_seed(noise_seed: int) -> int:
@@ -705,8 +772,8 @@ def run_one(
     attempt44_config: dict[str, Any],
 ) -> dict[str, Any]:
     family_index = TRUTH_FAMILIES.index(family)
-    drift, controls, truth_metadata = make_truth(
-        model, family, epsilon, truth_seed
+    drift, controls, truth_metadata = make_attempt53_truth(
+        model, family, epsilon, truth_seed, config
     )
 
     def exact_evaluator(parameters: Any) -> float:
