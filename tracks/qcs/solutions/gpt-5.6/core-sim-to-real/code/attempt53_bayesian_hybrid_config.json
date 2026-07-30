@@ -1,0 +1,130 @@
+{
+  "attempt": 53,
+  "benchmark": {
+    "families": [
+      "control-map",
+      "drift",
+      "combined"
+    ],
+    "fixed_epsilon_by_family": {
+      "combined": 0.05,
+      "control-map": 0.05,
+      "drift": 0.1
+    },
+    "replicates_per_truth_cell": 2,
+    "truth_seeds": [
+      260701,
+      260702,
+      260703,
+      260704
+    ]
+  },
+  "bo": {
+    "candidate_pool_global": 1024,
+    "candidate_pool_local": 1024,
+    "domain_radius": 0.5,
+    "gp_jitter": 1e-10,
+    "initial_observations": 12,
+    "kernel": "matern-5/2-fixed-hessian-scaled",
+    "lengthscale_clip": [
+      0.05,
+      0.3
+    ],
+    "lengthscale_reference": 0.15,
+    "local_candidate_scale": 0.12,
+    "observation_counts": {
+      "bayes-32-k15": 30,
+      "bayes-64-k15": 62,
+      "bayes16-then-global-k15": 14,
+      "bayes32-then-global-k15": 30
+    },
+    "recommendation": "minimum-GP-posterior-mean-among-observed-points"
+  },
+  "bootstrap": {
+    "confidence": 0.95,
+    "draws": 5000,
+    "independent_unit": "truth-cell",
+    "seed": 113053,
+    "stratify_by": "family"
+  },
+  "budget": {
+    "decision_shots": 32768,
+    "sentinel_queries": 2,
+    "sentinel_shots": 1024,
+    "by_method": {
+      "bayes-32-k15": {
+        "decision_queries": 32,
+        "total_queries": 34,
+        "total_shots": 1050624
+      },
+      "bayes-64-k15": {
+        "decision_queries": 64,
+        "total_queries": 66,
+        "total_shots": 2099200
+      },
+      "bayes16-then-global-k15": {
+        "decision_queries": 48,
+        "total_queries": 50,
+        "total_shots": 1574912
+      },
+      "bayes32-then-global-k15": {
+        "decision_queries": 64,
+        "total_queries": 66,
+        "total_shots": 2099200
+      },
+      "principal-global-1cycle-k15": {
+        "decision_queries": 32,
+        "total_queries": 34,
+        "total_shots": 1050624
+      },
+      "principal-global-2cycle-k15": {
+        "decision_queries": 64,
+        "total_queries": 66,
+        "total_shots": 2099200
+      },
+      "sequential-quadratic-k15": {
+        "decision_queries": 64,
+        "total_queries": 66,
+        "total_shots": 2099200
+      }
+    }
+  },
+  "methods": [
+    "principal-global-1cycle-k15",
+    "principal-global-2cycle-k15",
+    "sequential-quadratic-k15",
+    "bayes-32-k15",
+    "bayes-64-k15",
+    "bayes16-then-global-k15",
+    "bayes32-then-global-k15"
+  ],
+  "noise_seed_derivation": {
+    "algorithm": "numpy.random.SeedSequence",
+    "components": [
+      113,
+      53,
+      "family_index",
+      "truth_seed",
+      "replicate"
+    ],
+    "paired_across_methods": true
+  },
+  "semantics": {
+    "evidence_level": "exploratory-development",
+    "online_acceptance_confidence": 0.995,
+    "primary_outcome": "posthoc-terminal-output-infidelity-at-most-1e-3",
+    "target_infidelity": 0.001,
+    "truth_values_available_to_optimizer": false
+  },
+  "sequential": {
+    "one_pass": true,
+    "points_per_direction": 4,
+    "scan_offsets": [
+      -1.0,
+      -0.3333333333333333,
+      0.3333333333333333,
+      1.0
+    ],
+    "width_rule": "phase3_common.scan_widths"
+  }
+}
